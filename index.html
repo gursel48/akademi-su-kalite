@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Su Kalitesi Deneme Sınavı</title>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 10px;
+      display: flex;
+      justify-content: center;
+      padding-bottom: 80px;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 860px;
+    }
+
+    .menu-container, .quiz-container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 14px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      width: 100%;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .menu-btn {
+      border: none;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: left;
+      cursor: pointer;
+      background: linear-gradient(135deg, #007bff, #0056b3);
+      color: white;
+    }
+
+    .menu-btn.locked {
+      background: linear-gradient(135deg, #6c757d, #495057);
+      cursor: not-allowed;
+      order: 999;
+      opacity: 0.85;
+    }
+
+    .wrong-menu-btn {
+      border: none;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: left;
+      cursor: pointer;
+      background: linear-gradient(135deg, #dc3545, #a71d2a);
+      color: white;
+      order: 9999;
+      animation: wrongBlink 10s infinite;
+    }
+
+    @keyframes wrongBlink {
+      0%, 45% {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(220,53,69,0);
+      }
+      50% {
+        opacity: 0.35;
+        transform: scale(1.02);
+        box-shadow: 0 0 18px rgba(220,53,69,0.45);
+      }
+      55%, 100% {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(220,53,69,0);
+      }
+    }
+
+    .quiz-container {
+      display: none;
+      position: relative;
+      padding-top: 85px;
+      min-height: 100vh;
+    }
+
+    .progress-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 6px;
+      background: #28a745;
+      transition: 0.3s;
+      width: 0%;
+      border-radius: 14px 14px 0 0;
+    }
+
+    .main-menu-btn {
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: calc(1rem + 4pt);
+      color: #333;
+      padding: 5px 0;
+    }
+
+    .header-info {
+      position: absolute;
+      top: 15px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding-right: 110px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      min-width: 0;
+      flex: 1;
+      flex-wrap: wrap;
+    }
+
+    .header-subject {
+      font-weight: normal;
+      color: #777;
+      font-size: 0.95rem;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .retry-badge {
+      display: none;
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffe69c;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+
+    .question-title {
+      white-space: pre-line;
+      margin-top: 0;
+      margin-bottom: 16px;
+      line-height: 1.45;
+      font-size: 1.2rem;
+      color: #222;
+    }
+
+    .option-btn {
+      width: 100%;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      border: 2px solid #e9ecef;
+      background: #f8f9fa;
+      text-align: left;
+      cursor: pointer;
+      font-size: 1.05rem;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+      position: relative;
+    }
+
+    .option-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+
+    .option-btn:disabled {
+      cursor: default;
+    }
+
+    .option-btn.correct {
+      background: #d4edda !important;
+      border-color: #28a745 !important;
+      color: #155724 !important;
+      font-weight: bold;
+    }
+
+    .option-btn.wrong {
+      background: #f8d7da !important;
+      border-color: #dc3545 !important;
+      color: #721c24 !important;
+      font-weight: bold;
+    }
+
+    .tick {
+      display: inline-block;
+      margin-left: 10px;
+      color: #1f9d45;
+      font-weight: bold;
+      opacity: 0;
+      transform: scale(0.4);
+    }
+
+    .tick.show {
+      animation: popTick 0.45s ease forwards;
+    }
+
+    @keyframes popTick {
+      0%   { opacity: 0; transform: scale(0.4); }
+      60%  { opacity: 1; transform: scale(1.2); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .explanation {
+      display: none;
+      margin-top: 20px;
+      padding: 15px;
+      background: #eaf2f8;
+      border-left: 5px solid #2980b9;
+      border-radius: 8px;
+      line-height: 1.5;
+    }
+
+    .nav-controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 25px;
+    }
+
+    .nav-btn {
+      flex: 1;
+      padding: 18px;
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .next-btn { background: #007bff; }
+    .prev-btn {
+      background: #e9ecef;
+      color: #dc3545 !important;
+      border: 1px solid #ddd;
+    }
+
+    .quiz-footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+      color: #666;
+      font-weight: bold;
+      font-size: 0.9rem;
+      flex-wrap: wrap;
+    }
+
+    .disclaimer-box {
+      margin-top: 20px;
+      padding: 15px;
+      background: #fdfdfd;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      color: #888;
+      font-size: 0.8rem;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    .disclaimer-title {
+      display: block;
+      font-weight: bold;
+      color: #555;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+    }
+
+    .source-tag {
+      position: fixed;
+      bottom: 8px;
+      left: 8px;
+      background: rgba(0, 0, 0, 0.05);
+      color: #777;
+      padding: 5px 10px;
+      border-radius: 10px;
+      font-size: 0.72rem;
+      font-weight: bold;
+      z-index: 9999;
+    }
+
+    .reset-set-btn {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      background: #ffc107;
+      border: none;
+      padding: 8px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 0.8rem;
+      cursor: pointer;
+      z-index: 5;
+    }
+
+    @media (max-width: 480px) {
+      .quiz-container {
+        padding-top: 110px;
+      }
+
+      .header-info {
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        padding-right: 104px;
+        align-items: flex-start;
+      }
+
+      .header-left {
+        display: block;
+        padding-right: 6px;
+      }
+
+      .main-menu-btn {
+        display: block;
+        font-size: 0.95rem;
+        padding: 0;
+        margin-bottom: 6px;
+      }
+
+      .header-subject {
+        display: block;
+        margin: 0;
+        font-size: 0.82rem;
+        line-height: 1.3;
+        max-width: 100%;
+      }
+
+      .question-title {
+        font-size: 1.05rem;
+      }
+
+      .option-btn {
+        font-size: 1rem;
+        padding: 14px;
+      }
+
+      .reset-set-btn {
+        top: 12px;
+        right: 12px;
+        font-size: 0.75rem;
+        padding: 7px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+  <div id="menuContainer" class="menu-container">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:20px;">
+      <h1 id="mainTitle" style="margin:0;">Su Kalitesi Deneme Sınavı</h1>
+      <button onclick="clearAllStatistics()" style="background:#dc3545; color:white; border:none; padding:8px 10px; border-radius:8px; cursor:pointer; font-size:0.75rem;">
+        Verileri Sıfırla
+      </button>
+<button onclick="shuffleAllQuestions()" style="background:#28a745; color:white; border:none; padding:8px 10px; border-radius:8px; cursor:pointer; font-size:0.75rem;">Soruları Karıştır</button>
+
+    </div>
+
+    <div id="menuGrid" class="menu-grid"></div>
+
+    <div class="disclaimer-box">
+      <span class="disclaimer-title">⚠️ Önemli Uyarı</span>
+      Bu sistemde yer alan içerikler yalnızca eğitim amaçlıdır. İçeriklerin kullanımından doğabilecek doğrudan veya dolaylı hiçbir sorumluluk kabul edilmez. Tüm kullanım sorumluluğu kullanıcıya aittir.
+    </div>
+  </div>
+
+  <div id="quizContainer" class="quiz-container">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <div class="header-info">
+      <div class="header-left">
+        <button onclick="showMenu()" class="main-menu-btn">☰ Ana Menü</button>
+        <span id="headerSubject" class="header-subject"></span>
+      </div>
+    </div>
+
+    <button onclick="resetCurrentSet()" class="reset-set-btn">Seti Sıfırla</button>
+
+    <div id="retryBadge" class="retry-badge">Yalnış cevaplanan soru</div>
+    <h2 id="questionText" class="question-title">...</h2>
+
+    <div id="optionsArea"></div>
+
+    <div class="quiz-footer">
+      <div id="footerLeft">Kalan: 0</div>
+      <div id="footerRight">0 / 0</div>
+    </div>
+
+    <div id="explanationArea" class="explanation"></div>
+
+    <div class="nav-controls">
+      <button id="prevBtn" class="nav-btn prev-btn" onclick="goBack()" style="visibility:hidden;">❮ Önceki</button>
+      <button id="nextBtn" class="nav-btn next-btn" onclick="goForward()" style="visibility:hidden;">Yeni Soru ❯</button>
+    </div>
+  </div>
+</div>
+
+<div class="source-tag" id="sourceTag">Kaynak: yapayzeka/ su_kalitesi_akademik_duzeltilmis_v2</div>
+
+<script>
+  const BASE_SUBJECT = "su kalitesi";
+  const VERSION_NUMBER = 2;
+
+  function buildVersionName(base, version) {
+    return `${base} Versiyon ${version}`;
+  }
+
+  function buildVersionSlug(base, version) {
+    return `${base.toLowerCase().replace(/ç/g, "c").replace(/ğ/g, "g").replace(/ı/g, "i").replace(/ö/g, "o").replace(/ş/g, "s").replace(/ü/g, "u").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "")}_versiyon_${version}`;
+  }
+
+  const CURRENT_SUBJECT = BASE_SUBJECT;
+  const VERSION_SLUG = buildVersionSlug(BASE_SUBJECT, VERSION_NUMBER);
+  const SOURCE_TEXT = `Kaynak: yapayzeka/ su_kalitesi_akademik_duzeltilmis_v2`;
+  const QUESTIONS_PER_SET = 30;
+
+  const questions = [
+  {
+    "qno": 1,
+    "id": "157650",
+    "q": "Soru-1: BOİ ve KOİ kavramları kapsamında, aşağıdakilerden hangisi iki parametre arasındaki temel farkı en iyi açıklar?",
+    "o": [
+      "BOİ yalnızca inorganik maddeleri kapsar",
+      "KOİ sadece biyolojik süreçleri ifade eder",
+      "BOİ biyolojik, KOİ kimyasal oksidasyonu temel alır",
+      "KOİ oksijen tüketimini ölçmez",
+      "BOİ kısa sürede sonuç verir"
+    ],
+    "c": 2,
+    "e": "Açıklama: BOİ biyolojik ayrışabilir organik maddenin oksijen tüketimini, KOİ ise kimyasal oksidasyonla belirlenen toplam oksitlenebilir madde yükünü ifade eder."
+  },
+  {
+    "qno": 2,
+    "id": "157643",
+    "q": "Soru-2: Su kalitesi kavramı kapsamında, fiziksel parametrelerin değerlendirilmesinin temel nedeni aşağıdakilerden hangisidir?",
+    "o": [
+      "Estetik ve ekolojik etkileri ortaya koymak",
+      "Suyun kimyasal içeriğini belirlemek",
+      "Mikroorganizma türlerini tanımlamak",
+      "Toksik maddeleri doğrudan ölçmek",
+      "Biyolojik çeşitliliği sınıflandırmak"
+    ],
+    "c": 0,
+    "e": "Açıklama: Estetik ve ekolojik etkileri ortaya koymak"
+  },
+  {
+    "qno": 3,
+    "id": "157632",
+    "q": "Soru-3: Bulanıklık parametresi kapsamında yapılan değerlendirmelere göre, yüksek bulanıklığın temel ekolojik sonucu aşağıdakilerden hangisidir?",
+    "o": [
+      "Suyun sertliğinin artması",
+      "Mikroorganizma sayısının azalması",
+      "pH değerinin yükselmesi",
+      "Fotosentez faaliyetlerinin azalması",
+      "Kimyasal kirliliğin tamamen ortadan kalkması"
+    ],
+    "c": 3,
+    "e": "Açıklama: Fotosentez faaliyetlerinin azalması"
+  },
+  {
+    "qno": 4,
+    "id": "157719",
+    "q": "Soru-4: Ekolojik denge kapsamında, su kalitesindeki bozulmanın besin zincirine ilk etkisi genellikle hangi düzeyde görülür?",
+    "o": [
+      "Üst trofik düzeylerde",
+      "Yırtıcı balıklarda",
+      "Fitoplankton ve zooplanktonda",
+      "Bentik omurgalılarda",
+      "Mikroorganizmalarda"
+    ],
+    "c": 2,
+    "e": "Açıklama: Fitoplankton ve zooplanktonda"
+  },
+  {
+    "qno": 5,
+    "id": "157637",
+    "q": "Soru-5: Ötrofikasyon süreci kapsamında yapılan değerlendirmelere göre, aşağıdakilerden hangisi bu sürecin temel sonucudur?",
+    "o": [
+      "Suyun sertliğinin artması",
+      "Mikroorganizma çeşitliliğinin azalması",
+      "Kimyasal oksijen ihtiyacının düşmesi",
+      "Alg patlamaları ve oksijen tükenmesi",
+      "Sıcaklığın düşmesi"
+    ],
+    "c": 3,
+    "e": "Açıklama: Alg patlamaları ve oksijen tükenmesi"
+  },
+  {
+    "qno": 6,
+    "id": "157725",
+    "q": "Soru-6: Su kalite standartları kapsamında, standartların belirlenmesindeki temel amaç aşağıdakilerden hangisidir?",
+    "o": [
+      "Tüm suların aynı sınıfa sokulması",
+      "İnsan ve çevre sağlığının korunması",
+      "Analizlerin zorlaştırılması",
+      "Doğal kirliliğin artırılması",
+      "Su kullanımını tamamen sınırlandırmak"
+    ],
+    "c": 1,
+    "e": "Açıklama: İnsan ve çevre sağlığının korunması"
+  },
+  {
+    "qno": 7,
+    "id": "157669",
+    "q": "Soru-7: Atık su arıtma sistemleri kapsamında, fiziksel arıtmanın temel işlevi aşağıdakilerden hangisidir?",
+    "o": [
+      "Organik maddeleri biyolojik olarak parçalamak",
+      "Kimyasal çöktürme sağlamak",
+      "Askıda katı maddeleri uzaklaştırmak",
+      "Patojenleri tamamen yok etmek",
+      "Besin tuzlarını gidermek"
+    ],
+    "c": 2,
+    "e": "Açıklama: Askıda katı maddeleri uzaklaştırmak"
+  },
+  {
+    "qno": 8,
+    "id": "157690",
+    "q": "Soru-8: Sıcaklık parametresi kapsamında, su sıcaklığının artması aşağıdakilerden hangisini doğrudan etkiler?",
+    "o": [
+      "Renk oluşumunu",
+      "Çözünmüş oksijen miktarını",
+      "Askıda katı maddeyi",
+      "Fosfor bağlanmasını",
+      "Sertlik derecesini"
+    ],
+    "c": 1,
+    "e": "Açıklama: Çözünmüş oksijen miktarını"
+  },
+  {
+    "qno": 9,
+    "id": "157630",
+    "q": "Soru-9: Su kalitesini etkileyen faktörler kapsamında, aşağıdakilerden hangisi antropojenik bir etkendir?",
+    "o": [
+      "Jeolojik yapı",
+      "Mevsimsel sıcaklık değişimleri",
+      "Yağış rejimi",
+      "Akarsu debisi",
+      "Endüstriyel atık deşarjları"
+    ],
+    "c": 4,
+    "e": "Açıklama: Endüstriyel atık deşarjları"
+  },
+  {
+    "qno": 10,
+    "id": "157663",
+    "q": "Soru-10: Su kirliliğinin insan sağlığına etkileri kapsamında, aşağıdakilerden hangisi patojen mikroorganizmalarla doğrudan ilişkilidir?",
+    "o": [
+      "Kanser oluşumu",
+      "Hormon bozuklukları",
+      "Ağır metal birikimi",
+      "Alerjik reaksiyonlar",
+      "Kolera ve tifo"
+    ],
+    "c": 4,
+    "e": "Açıklama: Kolera ve tifo"
+  },
+  {
+    "qno": 11,
+    "id": "157687",
+    "q": "Soru-11: Genel değerlendirme kapsamında, su kalitesinin korunmasının temel gerekçesi aşağıdakilerden hangisidir?",
+    "o": [
+      "Sadece ekosistemleri korumak",
+      "Yalnızca ekonomik kazanç sağlamak",
+      "İnsan sağlığı, çevre ve sürdürülebilirliği birlikte güvence altına almak",
+      "Su kullanımını tamamen sınırlandırmak",
+      "Doğal süreçleri hızlandırmak"
+    ],
+    "c": 2,
+    "e": "Açıklama: İnsan sağlığı, çevre ve sürdürülebilirliği birlikte güvence altına almak"
+  },
+  {
+    "qno": 12,
+    "id": "157674",
+    "q": "Soru-12: Uluslararası su kalitesi standartları kapsamında, içme suyu güvenliği konusunda küresel ölçekte rehberlik sağlayan kuruluş aşağıdakilerden hangisidir?",
+    "o": [
+      "FAO",
+      "UNESCO",
+      "WHO",
+      "OECD",
+      "UNEP"
+    ],
+    "c": 2,
+    "e": "Açıklama: WHO"
+  },
+  {
+    "qno": 13,
+    "id": "157710",
+    "q": "Soru-13: Mikrobiyolojik kalite kapsamında, koliform bakterilerin kullanılması aşağıdakilerden hangisini değerlendirmek içindir?",
+    "o": [
+      "Dışkı kaynaklı kirliliği",
+      "Kimyasal kirliliği",
+      "Ağır metal varlığını",
+      "Fiziksel bulanıklığı",
+      "Tuzluluk düzeyini"
+    ],
+    "c": 0,
+    "e": "Açıklama: Dışkı kaynaklı kirliliği"
+  },
+  {
+    "qno": 14,
+    "id": "157714",
+    "q": "Soru-14: Yayılı kirlilik kapsamında, kontrolü zor olan kirlilik türü aşağıdakilerden hangisidir?",
+    "o": [
+      "Endüstriyel atıksu",
+      "Evsel atıksu",
+      "Tarımsal yüzey akışı",
+      "Arıtma tesisi çıkışı",
+      "Fabrika deşarjı"
+    ],
+    "c": 2,
+    "e": "Açıklama: Tarımsal yüzey akışı"
+  },
+  {
+    "qno": 15,
+    "id": "157702",
+    "q": "Soru-15: Su kirliliği–su kalitesi ilişkisi kapsamında, kirlilik arttıkça su kalitesinin düşmesinin temel sonucu aşağıdakilerden hangisidir?",
+    "o": [
+      "Kullanım alanlarının genişlemesi",
+      "Ekosistem direncinin artması",
+      "Doğal arıtmanın hızlanması",
+      "Biyolojik çeşitliliğin artması",
+      "Suyun kullanım amacına uygunluğunun azalması"
+    ],
+    "c": 4,
+    "e": "Açıklama: Suyun kullanım amacına uygunluğunun azalması"
+  },
+  {
+    "qno": 16,
+    "id": "157729",
+    "q": "Soru-16: Su Kirliliği Kontrolü Yönetmeliği kapsamında, aşağıdakilerden hangisi Yönetmeliğin temel amacını en doğru şekilde ifade eder?",
+    "o": [
+      "Su kaynaklarının yalnızca endüstriyel kullanımını artırmak",
+      "Yeraltı sularını tarımsal üretime tahsis etmek",
+      "Atıksu deşarjlarını tamamen serbest bırakmak",
+      "Su kirlenmesini sürdürülebilir kalkınma hedefleriyle uyumlu biçimde önlemek",
+      "Su kalitesini yalnızca içme suyu açısından değerlendirmek"
+    ],
+    "c": 3,
+    "e": "Açıklama: Su kirlenmesini sürdürülebilir kalkınma hedefleriyle uyumlu biçimde önlemek"
+  },
+  {
+    "qno": 17,
+    "id": "157649",
+    "q": "Soru-17: Çözünmüş oksijen parametresi kapsamında, aşağıdakilerden hangisi oksijen seviyesinin düşmesine neden olabilir?",
+    "o": [
+      "Düşük sıcaklık",
+      "Düşük organik madde",
+      "Yüksek fotosentez",
+      "Organik atık yükü",
+      "Yüksek su akışı"
+    ],
+    "c": 3,
+    "e": "Açıklama: Organik atık yükü"
+  },
+  {
+    "qno": 18,
+    "id": "157662",
+    "q": "Soru-18: Su kirliliğinin ekosistem üzerindeki etkileri kapsamında, aşağıdakilerden hangisi doğrudan sonuçlardan biridir?",
+    "o": [
+      "Tür çeşitliliğinin azalması",
+      "Buharlaşmanın artması",
+      "Yağış rejiminin değişmesi",
+      "Tuzluluğun azalması",
+      "Sertliğin düşmesi"
+    ],
+    "c": 0,
+    "e": "Açıklama: Tür çeşitliliğinin azalması"
+  },
+  {
+    "qno": 19,
+    "id": "157700",
+    "q": "Soru-19: Biyolojik kalite parametreleri kapsamında, fitoplankton yoğunluğu en çok hangi durumu yansıtır?",
+    "o": [
+      "Trofik seviyeyi",
+      "Suyun sertliğini",
+      "Tuzluluk derecesini",
+      "Kimyasal toksisiteyi",
+      "Fiziksel bulanıklığı"
+    ],
+    "c": 0,
+    "e": "Açıklama: Trofik seviyeyi"
+  },
+  {
+    "qno": 20,
+    "id": "157712",
+    "q": "Soru-20: Ağır metaller kapsamında, biyobirikim özelliğinin çevresel risk oluşturmasının temel nedeni aşağıdakilerden hangisidir?",
+    "o": [
+      "Canlı vücudunda depolanmaları",
+      "Hızlı parçalanmaları",
+      "Suda kolayca buharlaşmaları",
+      "Işıkla yok olmaları",
+      "Düşük toksisite göstermeleri"
+    ],
+    "c": 0,
+    "e": "Açıklama: Canlı vücudunda depolanmaları"
+  },
+  {
+    "qno": 21,
+    "id": "157695",
+    "q": "Soru-21: Çözünmüş oksijen parametresi kapsamında, sudaki ÇO düzeyinin düşmesi durumunda canlılar üzerinde ilk olarak ortaya çıkan etki aşağıdakilerden hangisidir?",
+    "o": [
+      "Alg gelişiminin hızlanması",
+      "Kimyasal maddelerin çökelmesi",
+      "Balıklarda solunum stresinin başlaması",
+      "Suyun sertliğinin artması",
+      "pH değerinin yükselmesi"
+    ],
+    "c": 2,
+    "e": "Açıklama: Balıklarda solunum stresinin başlaması"
+  },
+  {
+    "qno": 22,
+    "id": "157694",
+    "q": "Soru-22: pH parametresi kapsamında, sucul canlılar için uygun pH aralığının dışına çıkılması hangi sonucu doğurur?",
+    "o": [
+      "Büyümenin hızlanması",
+      "Fizyolojik stres ve ölümler",
+      "Oksijen üretiminin artması",
+      "Besin tuzu azalması",
+      "Sertlik dengesinin sağlanması"
+    ],
+    "c": 1,
+    "e": "Açıklama: Fizyolojik stres ve ölümler"
+  },
+  {
+    "qno": 23,
+    "id": "157721",
+    "q": "Soru-23: Atıksu arıtma teknolojileri kapsamında, biyolojik arıtmanın temel işlevi aşağıdakilerden hangisidir?",
+    "o": [
+      "Ağır metalleri buharlaştırmak",
+      "Organik maddeleri mikroorganizmalarla parçalamak",
+      "Tuzluluğu artırmak",
+      "Fiziksel kirleticileri üretmek",
+      "pHʼı aşırı düşürmek"
+    ],
+    "c": 1,
+    "e": "Açıklama: Organik maddeleri mikroorganizmalarla parçalamak"
+  },
+  {
+    "qno": 24,
+    "id": "157720",
+    "q": "Soru-24: Havza bazlı yönetim kapsamında, bu yaklaşımın tercih edilmesinin temel nedeni aşağıdakilerden hangisidir?",
+    "o": [
+      "Su kaynaklarının bütüncül değerlendirilmesi",
+      "İdari sınırların esas alınması",
+      "Yerel sorunların göz ardı edilmesi",
+      "Sadece yüzey sularına odaklanılması",
+      "Analiz maliyetlerinin artırılması"
+    ],
+    "c": 0,
+    "e": "Açıklama: Su kaynaklarının bütüncül değerlendirilmesi"
+  },
+  {
+    "qno": 25,
+    "id": "157635",
+    "q": "Soru-25: BOİ kavramı ile ilgili olarak yapılan değerlendirmeler kapsamında, yüksek BOİ değeri neyi ifade eder?",
+    "o": [
+      "Organik madde yükünün fazla olduğunu",
+      "İnorganik kirliliğin baskın olduğunu",
+      "Fiziksel kirliliğin arttığını",
+      "Radyoaktif kirliliğin varlığını",
+      "Tuzluluk artışını"
+    ],
+    "c": 0,
+    "e": "Açıklama: Organik madde yükünün fazla olduğunu"
+  },
+  {
+    "qno": 26,
+    "id": "157673",
+    "q": "Soru-26: Ulusal su kalitesi standartları kapsamında, Türkiyeʼde su kirliliğinin kontrolüne ilişkin temel yasal düzenleme aşağıdakilerden hangisidir?",
+    "o": [
+      "Çevre Kanunu",
+      "Su Kirliliği Kontrolü Yönetmeliği",
+      "İçme Suyu Yönetmeliği",
+      "Kıyı Kanunu",
+      "Atık Yönetimi Yönetmeliği"
+    ],
+    "c": 1,
+    "e": "Açıklama: Türkiye’de su kirliliğinin kontrolüne ilişkin temel ikincil düzenleme Su Kirliliği Kontrolü Yönetmeliğidir. Çerçeve yasal dayanak ise 2872 sayılı Çevre Kanunu’dur."
+  },
+  {
+    "qno": 27,
+    "id": "157648",
+    "q": "Soru-27: Kimyasal kalite parametreleri kapsamında pH değerlendirildiğinde, pHʼın aşırı düşmesi aşağıdakilerden hangisine yol açabilir?",
+    "o": [
+      "Metal çözünürlüğünün artmasına",
+      "Amonyak toksisitesinin azalmasına",
+      "Alg üretiminin artmasına",
+      "Sertliğin düşmesine",
+      "Tuzluluğun azalmasına"
+    ],
+    "c": 0,
+    "e": "Açıklama: Metal çözünürlüğünün artmasına"
+  },
+  {
+    "qno": 28,
+    "id": "157640",
+    "q": "Soru-28: Su kalitesinin izlenmesi konusu kapsamında, doğru ve güvenilir sonuç elde edilmesinde en kritik aşama aşağıdakilerden hangisidir?",
+    "o": [
+      "Numune alma tekniklerinin doğru uygulanması",
+      "Laboratuvar cihazlarının markası",
+      "Analiz süresinin uzun tutulması",
+      "Numunenin renk değerlendirmesi",
+      "Sonuçların manuel hesaplanması"
+    ],
+    "c": 0,
+    "e": "Açıklama: Numune alma tekniklerinin doğru uygulanması"
+  },
+  {
+    "qno": 29,
+    "id": "157685",
+    "q": "Soru-29: Kimyasal su kalitesi parametreleri kapsamında, amonyak ve nitritin su ürünleri yetiştiriciliği açısından tehlikeli olmasının temel nedeni aşağıdakilerden hangisidir?",
+    "o": [
+      "Tat ve koku oluşturması",
+      "Alg gelişimini durdurması",
+      "Sertliği azaltması",
+      "Toksik etki göstermesi",
+      "Renk değişimine yol açması"
+    ],
+    "c": 3,
+    "e": "Açıklama: Toksik etki göstermesi"
+  },
+  {
+    "qno": 30,
+    "id": "157676",
+    "q": "Soru-30: Laboratuvar analizleri kapsamında, KOİ parametresinin BOİʼden temel farkı aşağıdakilerden hangisidir?",
+    "o": [
+      "Sadece biyolojik ayrışmayı ölçmesi",
+      "Kimyasal oksidasyonu esas alması",
+      "Mikroorganizmaları baz alması",
+      "Yalnızca doğal organikleri kapsaması",
+      "Daha uzun sürede sonuç vermesi"
+    ],
+    "c": 1,
+    "e": "Açıklama: Kimyasal oksidasyonu esas alması"
+  },
+  {
+    "qno": 31,
+    "id": "157684",
+    "q": "Soru-31: Fiziksel su kalitesi parametreleri kapsamında, bulanıklığın artması aşağıdakilerden hangisine yol açar?",
+    "o": [
+      "Fotosentezin azalmasına",
+      "Oksijen çözünürlüğünün artmasına",
+      "pH dengesinin sağlanmasına",
+      "Tuzluluğun azalmasına",
+      "Sertliğin artmasına"
+    ],
+    "c": 0,
+    "e": "Açıklama: Fotosentezin azalmasına"
+  },
+  {
+    "qno": 32,
+    "id": "157706",
+    "q": "Soru-32: Tuzluluk kavramı kapsamında, tuzluluğun artması sucul canlılarda öncelikle hangi süreci etkiler?",
+    "o": [
+      "Sindirim sistemini",
+      "Osmoregülasyonu",
+      "Solunum hızını",
+      "Üreme hormonlarını",
+      "Enzim sentezini"
+    ],
+    "c": 1,
+    "e": "Açıklama: Osmoregülasyonu"
+  },
+  {
+    "qno": 33,
+    "id": "157699",
+    "q": "Soru-33: Fosfor bileşikleri kapsamında, fosfatların çevresel açıdan risk oluşturmasının temel nedeni aşağıdakilerden hangisidir?",
+    "o": [
+      "Sertliği artırması",
+      "pHʼı düşürmesi",
+      "Ötrofikasyonu tetiklemesi",
+      "Tuzluluğu azaltması",
+      "Renk oluşumunu engellemesi"
+    ],
+    "c": 2,
+    "e": "Açıklama: Ötrofikasyonu tetiklemesi"
+  },
+  {
+    "qno": 34,
+    "id": "157639",
+    "q": "Soru-34: Su kalitesi standartları kapsamında Türkiyeʼde uygulanan temel düzenleme, aşağıdakilerden hangisidir?",
+    "o": [
+      "WHO İçme Suyu Rehberleri",
+      "EPA Su Kalitesi Kriterleri",
+      "AB Su Çerçeve Direktifi",
+      "Su Kirliliği Kontrolü Yönetmeliği",
+      "Paris İklim Anlaşması"
+    ],
+    "c": 3,
+    "e": "Açıklama: Su Kirliliği Kontrolü Yönetmeliği"
+  },
+  {
+    "qno": 35,
+    "id": "157652",
+    "q": "Soru-35: Fosfor bileşikleri kapsamında, fosfatların aşırı artışı aşağıdakilerden hangisini tetikler?",
+    "o": [
+      "Ötrofikasyon",
+      "Sertlik artışı",
+      "Asitleşme",
+      "Tuzluluk artışı",
+      "Metal çökelmesi"
+    ],
+    "c": 0,
+    "e": "Açıklama: Ötrofikasyon"
+  },
+  {
+    "qno": 36,
+    "id": "157680",
+    "q": "Soru-36: Su kalitesinin korunması kapsamında, kirlilik önleme yaklaşımlarının temel özelliği aşağıdakilerden hangisidir?",
+    "o": [
+      "Kirliliği oluştuğu ortamda seyrelterek azaltmak",
+      "Kirliliği kaynağında azaltmak",
+      "Doğal arıtma süreçlerine bırakmak",
+      "Sadece arıtma tesislerine odaklanmak",
+      "Alıcı ortam kapasitesini artırmak"
+    ],
+    "c": 1,
+    "e": "Açıklama: Kirliliği kaynağında azaltmak"
+  },
+  {
+    "qno": 37,
+    "id": "157672",
+    "q": "Soru-37: Sürdürülebilir su yönetimi kapsamında, temel hedef aşağıdakilerden hangisidir?",
+    "o": [
+      "Mevcut su kaynaklarını hızlı tüketmek",
+      "Yalnızca ekonomik fayda sağlamak",
+      "Gelecek nesillerin su ihtiyacını güvence altına almak",
+      "Su kullanımını tamamen sınırlandırmak",
+      "Doğal döngüleri değiştirmek"
+    ],
+    "c": 2,
+    "e": "Açıklama: Gelecek nesillerin su ihtiyacını güvence altına almak"
+  },
+  {
+    "qno": 38,
+    "id": "157696",
+    "q": "Soru-38: BOİ parametresi kapsamında, yüksek BOİ değeri aşağıdakilerden hangisini ifade eder?",
+    "o": [
+      "Düşük mikrobiyal aktivite",
+      "Organik kirliliğin az olduğunu",
+      "Suyun tamamen temiz olduğunu",
+      "Mikroorganizmaların fazla oksijen tükettiğini",
+      "Kimyasal kirliliğin baskın olduğunu"
+    ],
+    "c": 3,
+    "e": "Açıklama: Yüksek BOİ, sudaki organik maddenin fazla olduğunu ve mikroorganizmaların bu maddeyi parçalamak için daha çok oksijen tükettiğini gösterir."
+  },
+  {
+    "qno": 39,
+    "id": "157697",
+    "q": "Soru-39: Kimyasal Oksijen İhtiyacı (KOİ) parametresi kapsamında, KOİʼnin Biyokimyasal Oksijen İhtiyacı BOİʼye göre avantajı aşağıdakilerden hangisidir?",
+    "o": [
+      "Daha uzun sürede ölçülmesi",
+      "Yalnızca biyolojik ayrışmayı içermesi",
+      "Kimyasal oksidasyonla hızlı sonuç vermesi",
+      "Mikroorganizmaya bağlı olması",
+      "Sadece doğal organikleri kapsaması"
+    ],
+    "c": 2,
+    "e": "Açıklama: Kimyasal oksidasyonla hızlı sonuç vermesi"
+  },
+  {
+    "qno": 40,
+    "id": "157716",
+    "q": "Soru-40: Su kalite sınıflandırması kapsamında, kalite sınıflarının belirlenmesindeki temel amaç aşağıdakilerden hangisidir?",
+    "o": [
+      "Tüm suların aynı şekilde kullanılması",
+      "Kullanım amacına uygunluk değerlendirmesi",
+      "Sadece estetik özelliklerin belirlenmesi",
+      "Kimyasal analizleri azaltmak",
+      "Biyolojik çeşitliliği sınırlamak"
+    ],
+    "c": 1,
+    "e": "Açıklama: Kullanım amacına uygunluk değerlendirmesi"
+  },
+  {
+    "qno": 41,
+    "id": "157645",
+    "q": "Soru-41: Renk parametresi kapsamında yapılan incelemelere göre, suyun doğal olmayan bir renge sahip olması genellikle neyi gösterir?",
+    "o": [
+      "Yüksek çözünmüş oksijen",
+      "Düşük pH değeri",
+      "Sertliğin düşük olması",
+      "Mineral eksikliği",
+      "Kirlilik veya alg yoğunluğu"
+    ],
+    "c": 4,
+    "e": "Açıklama: Kirlilik veya alg yoğunluğu"
+  },
+  {
+    "qno": 42,
+    "id": "157705",
+    "q": "Soru-42: Kalıcı sertlik konusu kapsamında, suda bulunan kalıcı sertliğin etkili bir şekilde giderilmesini sağlayan yöntem aşağıdakilerden hangisidir?",
+    "o": [
+      "Suyun kaynatılması",
+      "Havalandırma uygulanması",
+      "Kimyasal yumuşatma işlemleri",
+      "Suyun bir süre bekletilmesi",
+      "Güneş ışığına maruz bırakılması"
+    ],
+    "c": 2,
+    "e": "Açıklama: Kimyasal yumuşatma işlemleri"
+  },
+  {
+    "qno": 43,
+    "id": "157667",
+    "q": "Soru-43: Su kirliliğinin ölçümü kapsamında, sürekli izleme sistemlerinin temel avantajı aşağıdakilerden hangisidir?",
+    "o": [
+      "Düşük maliyetli olmaları",
+      "Sadece biyolojik veriler sağlamaları",
+      "Anlık ve sürekli veri üretmeleri",
+      "Laboratuvara ihtiyaç duymamaları",
+      "Numune alma gerektirmemeleri"
+    ],
+    "c": 2,
+    "e": "Açıklama: Anlık ve sürekli veri üretmeleri"
+  },
+  {
+    "qno": 44,
+    "id": "157722",
+    "q": "Soru-44: Temiz üretim teknolojileri kapsamında, bu yaklaşımın çevresel faydası aşağıdakilerden hangisidir?",
+    "o": [
+      "Atık miktarını artırması",
+      "Enerji tüketimini yükseltmesi",
+      "Kirliliği alıcı ortama aktarması",
+      "Doğal süreçleri engellemesi",
+      "Kaynak kullanımını optimize etmesi"
+    ],
+    "c": 4,
+    "e": "Açıklama: Kaynak kullanımını optimize etmesi"
+  },
+  {
+    "qno": 45,
+    "id": "157703",
+    "q": "Soru-45: Su sertliği kapsamında, sertliğin temel kaynağı aşağıdakilerden hangisidir?",
+    "o": [
+      "Sodyum ve potasyum iyonları",
+      "Demir ve mangan iyonları",
+      "Klor ve sülfat iyonları",
+      "Nitrat ve fosfat iyonları",
+      "Kalsiyum ve magnezyum iyonları"
+    ],
+    "c": 4,
+    "e": "Açıklama: Kalsiyum ve magnezyum iyonları"
+  },
+  {
+    "qno": 46,
+    "id": "157651",
+    "q": "Soru-46: Azot bileşikleri kapsamında su ürünleri yetiştiriciliği değerlendirildiğinde, en toksik bileşik aşağıdakilerden hangisidir?",
+    "o": [
+      "Nitrat",
+      "Nitrit",
+      "Moleküler azot",
+      "Protein bağlı azot",
+      "Amonyak"
+    ],
+    "c": 4,
+    "e": "Açıklama: Su ürünleri yetiştiriciliğinde azotlu bileşikler içinde en tehlikeli form serbest amonyaktır. Bu yüzden amonyak birikimi doğrudan toksisite riski oluşturur."
+  },
+  {
+    "qno": 47,
+    "id": "157644",
+    "q": "Soru-47: Suyun sıcaklığı kapsamında yapılan değerlendirmelerle ilgili olarak, aşağıdakilerden hangisi sıcaklık artışının dolaylı bir sonucudur?",
+    "o": [
+      "Nitrat konsantrasyonunun azalması",
+      "Çözünmüş oksijenin azalması",
+      "Suyun sertliğinin artması",
+      "Fosfatların çökelmesi",
+      "pH değerinin sabitlenmesi"
+    ],
+    "c": 1,
+    "e": "Açıklama: Çözünmüş oksijenin azalması"
+  },
+  {
+    "qno": 48,
+    "id": "157660",
+    "q": "Soru-48: Endüstriyel kaynaklı su kirliliği kapsamında, aşağıdakilerden hangisi bu tür atık suların ayırt edici bir özelliğidir?",
+    "o": [
+      "Düşük toksisite",
+      "Sabit bileşime sahip olmaları",
+      "Yüksek toksik ve kimyasal içerik",
+      "Yalnızca biyolojik kirleticiler içermeleri",
+      "Doğal arıtmayla kolayca giderilmeleri"
+    ],
+    "c": 2,
+    "e": "Açıklama: Yüksek toksik ve kimyasal içerik"
+  },
+  {
+    "qno": 49,
+    "id": "157642",
+    "q": "Soru-49: Sürdürülebilir su yönetimi konusu kapsamında, temel hedef aşağıdakilerden hangisidir?",
+    "o": [
+      "Su kaynaklarının yalnızca ekonomik kazanç amacıyla kullanılması",
+      "Kısa sürede su tüketiminin en üst düzeye çıkarılması",
+      "Su kullanımında çevresel etkilerin göz ardı edilmesi",
+      "Su yönetiminin yalnızca yerel ölçekte ele alınması",
+      "Gelecek nesillerin ihtiyaçlarını da gözeterek su kaynaklarının korunması"
+    ],
+    "c": 4,
+    "e": "Açıklama: Gelecek nesillerin ihtiyaçlarını da gözeterek su kaynaklarının korunması"
+  },
+  {
+    "qno": 50,
+    "id": "157641",
+    "q": "Soru-50: Su kalitesinin su ürünleri yetiştiriciliği açısından değerlendirilmesi kapsamında, aşağıdakilerden hangisi doğrudan verimliliği artırır?",
+    "o": [
+      "Bulanıklığın yükselmesi",
+      "pH değerinin aşırı yükselmesi",
+      "Amonyak konsantrasyonunun artması",
+      "Uygun çözünmüş oksijen seviyeleri",
+      "Nitrit birikimi"
+    ],
+    "c": 3,
+    "e": "Açıklama: Uygun çözünmüş oksijen seviyeleri"
+  },
+  {
+    "qno": 51,
+    "id": "157634",
+    "q": "Soru-51: Çözünmüş oksijen konusu kapsamında yapılan değerlendirmelere göre, aşağıdakilerden hangisi düşük çözünmüş oksijenin en belirgin sonucudur?",
+    "o": [
+      "Alg patlamalarının artması",
+      "Fosfat seviyesinin yükselmesi",
+      "pH değerinin artması",
+      "Sıcaklığın düşmesi",
+      "Balık ölümlerinin görülmesi"
+    ],
+    "c": 4,
+    "e": "Açıklama: Balık ölümlerinin görülmesi"
+  },
+  {
+    "qno": 52,
+    "id": "157665",
+    "q": "Soru-52: Yeraltı suyu kirliliği kapsamında, bu tür kirliliğin en önemli özelliği aşağıdakilerden hangisidir?",
+    "o": [
+      "Hızlı temizlenebilmesi",
+      "Kolay gözlemlenebilmesi",
+      "Uzun süre kalıcı olması",
+      "Yüzeysel etkilere sahip olması",
+      "Mevsimsel olarak ortadan kalkması"
+    ],
+    "c": 2,
+    "e": "Açıklama: Uzun süre kalıcı olması"
+  },
+  {
+    "qno": 53,
+    "id": "157670",
+    "q": "Soru-53: Biyolojik arıtma kapsamında, mikroorganizmaların temel görevi aşağıdakilerden hangisidir?",
+    "o": [
+      "Organik maddeleri parçalamak",
+      "Ağır metalleri çöktürmek",
+      "Suyun pHʼını ayarlamak",
+      "Tuzluluğu azaltmak",
+      "Renk giderimi sağlamak"
+    ],
+    "c": 0,
+    "e": "Açıklama: Organik maddeleri parçalamak"
+  },
+  {
+    "qno": 54,
+    "id": "157629",
+    "q": "Soru-54: Su kalitesinin önemi konusu ile ilgili olarak, aşağıdakilerden hangisi doğrudan su kalitesinin korunmasıyla sağlanır?",
+    "o": [
+      "Enerji tüketiminin azaltılması",
+      "Deniz taşımacılığının gelişmesi",
+      "Maden üretiminin artması",
+      "İnsan sağlığının korunması",
+      "İklim değişikliğinin tamamen durdurulması"
+    ],
+    "c": 3,
+    "e": "Açıklama: İnsan sağlığının korunması"
+  },
+  {
+    "qno": 55,
+    "id": "157692",
+    "q": "Soru-55: Bulanıklık kapsamında, askıda katı maddelerin artması sucul canlılar üzerinde hangi etkiyi oluşturur?",
+    "o": [
+      "Solungaç fonksiyonlarını olumsuz etkiler",
+      "Metabolizmayı hızlandırır",
+      "Besin zincirini dengeler",
+      "Oksijen çözünürlüğünü artırır",
+      "pH değerini yükseltir"
+    ],
+    "c": 0,
+    "e": "Açıklama: Solungaç fonksiyonlarını olumsuz etkiler"
+  },
+  {
+    "qno": 56,
+    "id": "157707",
+    "q": "Soru-56: İletkenlik parametresi kapsamında, sudaki elektriksel iletkenliğin yüksek olması aşağıdakilerden hangisini ifade eder?",
+    "o": [
+      "Suda çözünmüş madde miktarının düşük olduğunu",
+      "Suyun saf olduğunu",
+      "Suda çözünmüş iyonların yoğunluğunun fazla olduğunu",
+      "Çözünmüş oksijen miktarının yüksek olduğunu",
+      "Sıcaklığın düşük olduğunu"
+    ],
+    "c": 2,
+    "e": "Açıklama: Suda çözünmüş iyonların yoğunluğunun fazla olduğunu"
+  },
+  {
+    "qno": 57,
+    "id": "157657",
+    "q": "Soru-57: Kirlilik kaynakları kapsamında, aşağıdakilerden hangisi yayılı kaynak kirliliğine örnektir?",
+    "o": [
+      "Evsel atık su deşarjı",
+      "Endüstriyel fabrika çıkışı",
+      "Arıtma tesisi deşarjı",
+      "Tarımsal gübre kullanımı",
+      "Kanalizasyon hattı"
+    ],
+    "c": 3,
+    "e": "Açıklama: Tarımsal gübre kullanımı"
+  },
+  {
+    "qno": 58,
+    "id": "157718",
+    "q": "Soru-58: Su ürünleri yetiştiriciliği kapsamında, optimum su kalitesinin sağlanması üretimde öncelikle hangi sonucu doğurur?",
+    "o": [
+      "Büyüme ve yaşama oranının yükselmesini",
+      "Hastalık riskinin artmasını",
+      "Yem tüketiminin azalmasını",
+      "Stok yoğunluğunun düşmesini",
+      "Metabolik stresin artmasını"
+    ],
+    "c": 0,
+    "e": "Açıklama: Büyüme ve yaşama oranının yükselmesini"
+  },
+  {
+    "qno": 59,
+    "id": "157671",
+    "q": "Soru-59: Doğal arıtma sistemleri kapsamında, yapay sulak alanların temel avantajı aşağıdakilerden hangisidir?",
+    "o": [
+      "Yüksek enerji gerektirmeleri",
+      "Kimyasal kullanımının fazla olması",
+      "Düşük işletme maliyeti",
+      "Kısa sürede yüksek verim sağlamaları",
+      "Endüstriyel atıklar için tek çözüm olmaları"
+    ],
+    "c": 2,
+    "e": "Açıklama: Düşük işletme maliyeti"
+  },
+  {
+    "qno": 60,
+    "id": "157688",
+    "q": "Soru-60: Su kalitesi kavramı kapsamında, farklı kullanım amaçları için kalite kriterlerinin değişmesinin temel nedeni aşağıdakilerden hangisidir?",
+    "o": [
+      "Suyun doğal yapısının her ortamda aynı olması",
+      "Kullanım amacına göre risklerin farklılık göstermesi",
+      "Kimyasal parametrelerin ölçülememesi",
+      "Biyolojik canlıların suya ihtiyaç duymaması",
+      "Fiziksel parametrelerin önemsiz olması"
+    ],
+    "c": 1,
+    "e": "Açıklama: Kullanım amacına göre risklerin farklılık göstermesi"
+  },
+  {
+    "qno": 61,
+    "id": "157709",
+    "q": "Soru-61: Sediment–su ilişkisi kapsamında, sedimentte biriken kirleticilerin risk oluşturmasının temel nedeni aşağıdakilerden hangisidir?",
+    "o": [
+      "Sürekli çözünmüş halde kalmaları",
+      "Biyolojik olarak etkisiz olmaları",
+      "Zamanla tekrar suya karışabilmeleri",
+      "Işık geçirgenliğini artırmaları",
+      "pHʼı sabitlemeleri"
+    ],
+    "c": 2,
+    "e": "Açıklama: Zamanla tekrar suya karışabilmeleri"
+  },
+  {
+    "qno": 62,
+    "id": "157686",
+    "q": "Soru-62: Biyolojik kalite parametreleri kapsamında, fekal koliform bakterilerin varlığı neyi gösterir?",
+    "o": [
+      "Doğal plankton zenginliğini",
+      "Endüstriyel kirliliği",
+      "Organik madde eksikliğini",
+      "Dışkı kaynaklı kirliliği",
+      "Termal kirliliği"
+    ],
+    "c": 3,
+    "e": "Açıklama: Dışkı kaynaklı kirliliği"
+  },
+  {
+    "qno": 63,
+    "id": "157631",
+    "q": "Soru-63: Suyun fiziksel kalite parametreleri kapsamında sıcaklık değerlendirildiğinde, aşağıdaki sonuçlardan hangisi beklenir?",
+    "o": [
+      "pH değerinin sabitlenmesi",
+      "Kimyasal oksijen ihtiyacının düşmesi",
+      "Fosfat konsantrasyonunun artması",
+      "Ağır metal çökelmesinin hızlanması",
+      "Çözünmüş oksijen miktarının azalması"
+    ],
+    "c": 4,
+    "e": "Açıklama: Çözünmüş oksijen miktarının azalması"
+  },
+  {
+    "qno": 64,
+    "id": "157653",
+    "q": "Soru-64: Biyolojik kalite parametreleri kapsamında, mikroorganizmaların temel önemi aşağıdakilerden hangisidir?",
+    "o": [
+      "Suyun sertliğini belirlemeleri",
+      "Hijyenik kaliteyi yansıtmaları",
+      "Fiziksel kirliliği azaltmaları",
+      "Tuzluluğu dengelemeleri",
+      "Isı dağılımını düzenlemeleri"
+    ],
+    "c": 1,
+    "e": "Açıklama: Hijyenik kaliteyi yansıtmaları"
+  },
+  {
+    "qno": 65,
+    "id": "157723",
+    "q": "Soru-65: Numune alma teknikleri kapsamında, yanlış numune alımının temel sonucu aşağıdakilerden hangisidir?",
+    "o": [
+      "Daha güvenilir analizler",
+      "Gerçek durumu yansıtmayan sonuçlar",
+      "Kirliliğin azalması",
+      "Analiz süresinin kısalması",
+      "Doğal arıtmanın hızlanması"
+    ],
+    "c": 1,
+    "e": "Açıklama: Gerçek durumu yansıtmayan sonuçlar"
+  },
+  {
+    "qno": 66,
+    "id": "157728",
+    "q": "Soru-66: “ Bu Yönetmeliğin…………………, Ülkenin yeraltı ve yerüstü su kaynakları potansiyelinin korunması ve en iyi bir biçimde kullanımının sağlanması için, su kirlenmesinin önlenmesini sürdürülebilir kalkınma hedefleriyle uyumlu bir şekilde gerçekleştirmek üzere gerekli olan hukuki ve teknik esasları belirlemektir.” Su Kirliliği Kontrolü Yönetmeliğine göre yukarıda verilen hükümde boş bırakılan yere aşağıdakilerden hangisi getirilmelidir?",
+    "o": [
+      "amacı",
+      "kapsamı",
+      "dayanağı",
+      "vizyonu",
+      "misyonu"
+    ],
+    "c": 0,
+    "e": "Açıklama: amacı"
+  },
+  {
+    "qno": 67,
+    "id": "157677",
+    "q": "Soru-67: Sürekli izleme sistemleri kapsamında, bu sistemlerin çevresel yönetimde tercih edilme nedeni aşağıdakilerden hangisidir?",
+    "o": [
+      "Sadece ekonomik olmaları",
+      "Kirliliği tamamen önlemeleri",
+      "Gerçek zamanlı veri sağlamaları",
+      "Laboratuvar ihtiyacını ortadan kaldırmaları",
+      "Yalnızca pH ölçümü yapmaları"
+    ],
+    "c": 2,
+    "e": "Açıklama: Gerçek zamanlı veri sağlamaları"
+  },
+  {
+    "qno": 68,
+    "id": "157708",
+    "q": "Soru-68: Askıda katı madde kapsamında, yüksek AKM değerleri hangi sonucu doğurur?",
+    "o": [
+      "Işık geçirgenliğinin azalmasını",
+      "Fotosentezin artmasını",
+      "Oksijen çözünürlüğünün artmasını",
+      "Tuzluluğun düşmesini",
+      "pH dengesinin sağlanmasını"
+    ],
+    "c": 0,
+    "e": "Açıklama: Işık geçirgenliğinin azalmasını"
+  },
+  {
+    "qno": 69,
+    "id": "157711",
+    "q": "Soru-69: Patolojik riskler kapsamında, mikrobiyolojik kirlilik en çok hangi kullanım alanında risk oluşturur?",
+    "o": [
+      "Endüstriyel soğutmada",
+      "Enerji üretiminde",
+      "İçme ve kullanma suyunda",
+      "Sulama suyunda",
+      "Yangın söndürmede"
+    ],
+    "c": 2,
+    "e": "Açıklama: İçme ve kullanma suyunda"
+  },
+  {
+    "qno": 70,
+    "id": "157701",
+    "q": "Soru-70: Biyolojik indikatörler kapsamında, bazı canlı türlerinin su kalitesini göstermede kullanılmasının temel nedeni aşağıdakilerden hangisidir?",
+    "o": [
+      "Kısa ömürlü olmaları",
+      "Ortam değişimlerine duyarlı olmaları",
+      "Hızlı çoğalmaları",
+      "Yüksek ekonomik değer taşımaları",
+      "Tüm sularda bulunmaları"
+    ],
+    "c": 1,
+    "e": "Açıklama: Ortam değişimlerine duyarlı olmaları"
+  },
+  {
+    "qno": 71,
+    "id": "157675",
+    "q": "Soru-71: Su kalitesinin izlenmesi kapsamında, numune alma sürecinde dikkat edilmesi gereken en kritik unsur aşağıdakilerden hangisidir?",
+    "o": [
+      "Numunenin temsil edici olması",
+      "Numunenin hızlı analiz edilmesi",
+      "Numune miktarının fazla olması",
+      "Numunenin soğuk ortamda taşınması",
+      "Numunenin metal kapta alınması"
+    ],
+    "c": 0,
+    "e": "Açıklama: Numunenin temsil edici olması"
+  },
+  {
+    "qno": 72,
+    "id": "157647",
+    "q": "Soru-72: Tat ve koku parametreleri kapsamında yapılan değerlendirmelere göre, aşağıdakilerden hangisi içme suyu açısından en kritik sonucu doğurur?",
+    "o": [
+      "Estetik sorunların oluşması",
+      "Sertliğin artması",
+      "Mineral dengenin bozulması",
+      "Kullanıcı kabulünün azalması",
+      "Oksijen çözünürlüğünün artması"
+    ],
+    "c": 3,
+    "e": "Açıklama: Kullanıcı kabulünün azalması"
+  },
+  {
+    "qno": 73,
+    "id": "157715",
+    "q": "Soru-73: Doğal arıtma süreçleri kapsamında, sulak alanların su kalitesine katkısı aşağıdakilerden hangisidir?",
+    "o": [
+      "Kirliliği artırmaları",
+      "Fiziksel kirleticileri üretmeleri",
+      "Tuzluluğu yükseltmeleri",
+      "pHʼı aşırı düşürmeleri",
+      "Besin maddelerini tutmaları"
+    ],
+    "c": 4,
+    "e": "Açıklama: Besin maddelerini tutmaları"
+  },
+  {
+    "qno": 74,
+    "id": "157679",
+    "q": "Soru-74: Ekolojik denge kapsamında, su kalitesinin bozulması besin zincirini nasıl etkiler?",
+    "o": [
+      "Üretici organizmaların artmasına neden olur",
+      "Enerji akışını dengeler",
+      "Türler arası dengeyi bozar",
+      "Trofik seviyeleri sabit tutar",
+      "Ekosistemi daha dirençli hale getirir"
+    ],
+    "c": 2,
+    "e": "Açıklama: Türler arası dengeyi bozar"
+  },
+  {
+    "qno": 75,
+    "id": "157681",
+    "q": "Soru-75: Havza bazlı yönetim kapsamında, bu yaklaşımın temel avantajı aşağıdakilerden hangisidir?",
+    "o": [
+      "Tekil su kaynaklarına odaklanması",
+      "Sadece yüzey sularını kapsaması",
+      "Yerel etkileri göz ardı etmesi",
+      "Kısa vadeli çözümler sunması",
+      "Su kaynaklarını bütüncül ele alması"
+    ],
+    "c": 4,
+    "e": "Açıklama: Su kaynaklarını bütüncül ele alması"
+  },
+  {
+    "qno": 76,
+    "id": "157689",
+    "q": "Soru-76: Su kalitesini etkileyen doğal faktörler kapsamında, aşağıdakilerden hangisi suyun fiziksel ve kimyasal özelliklerini doğrudan etkiler?",
+    "o": [
+      "Sanayi tesisleri",
+      "Evsel atıklar",
+      "Jeolojik yapı",
+      "Tarımsal gübreleme",
+      "Atıksu deşarjı"
+    ],
+    "c": 2,
+    "e": "Açıklama: Jeolojik yapı"
+  },
+  {
+    "qno": 77,
+    "id": "157724",
+    "q": "Soru-77: Laboratuvar analizleri kapsamında, fiziksel analizlerin temel amacı aşağıdakilerden hangisidir?",
+    "o": [
+      "Suyun görünür ve ölçülebilir özelliklerini değerlendirmek",
+      "Bakteriyel türleri belirlemek",
+      "Organik maddeyi parçalamak",
+      "Kimyasal reaksiyonları başlatmak",
+      "Ekosistem yapısını değiştirmek"
+    ],
+    "c": 0,
+    "e": "Açıklama: Suyun görünür ve ölçülebilir özelliklerini değerlendirmek"
+  },
+  {
+    "qno": 78,
+    "id": "157732",
+    "q": "Soru-78: Su Kirliliği Kontrolü Yönetmeliğinin hazırlanmasında esas alınan temel yasal dayanaklardan biri aşağıdakilerden hangisidir?",
+    "o": [
+      "3194 sayılı İmar Kanunu",
+      "2872 sayılı Çevre Kanunu",
+      "5216 sayılı Büyükşehir Belediyesi Kanunu",
+      "5393 sayılı Belediye Kanunu",
+      "5403 sayılı Toprak Koruma Kanunu"
+    ],
+    "c": 1,
+    "e": "Açıklama: 2872 sayılı Çevre Kanunu"
+  },
+  {
+    "qno": 79,
+    "id": "157666",
+    "q": "Soru-79: Deniz ve kıyı kirliliği kapsamında, aşağıdakilerden hangisi yaygın bir kirlilik kaynağıdır?",
+    "o": [
+      "Petrol sızıntıları",
+      "Tarımsal drenaj",
+      "Yeraltı suyu sızıntıları",
+      "Atmosferik azot bağlanması",
+      "Doğal sediman taşınımı"
+    ],
+    "c": 0,
+    "e": "Açıklama: Petrol sızıntıları"
+  },
+  {
+    "qno": 80,
+    "id": "157646",
+    "q": "Soru-80: Bulanıklık konusu kapsamında, askıda katı maddelerin fazla olması aşağıdakilerden hangisini doğrudan etkiler?",
+    "o": [
+      "Suyun sıcaklık profilini",
+      "Işık geçirgenliğini",
+      "pH tamponlama kapasitesini",
+      "Tuzluluk oranını",
+      "Sertlik değerini"
+    ],
+    "c": 1,
+    "e": "Açıklama: Işık geçirgenliğini"
+  },
+  {
+    "qno": 81,
+    "id": "157726",
+    "q": "Soru-81: Uluslararası su yönetimi kapsamında, WHO rehberlerinin temel özelliği aşağıdakilerden hangisidir?",
+    "o": [
+      "Sadece endüstriyel sulara yönelik olması",
+      "Küresel ölçekte sağlık temelli yaklaşım sunması",
+      "Yerel mevzuat yerine geçmesi",
+      "Biyolojik analizleri dışlaması",
+      "Fiziksel parametreleri yok sayması"
+    ],
+    "c": 1,
+    "e": "Açıklama: Küresel ölçekte sağlık temelli yaklaşım sunması"
+  },
+  {
+    "qno": 82,
+    "id": "157659",
+    "q": "Soru-82: Evsel atık sular kapsamında yapılan değerlendirmelere göre, bu atıkların temel özelliği aşağıdakilerden hangisidir?",
+    "o": [
+      "Yüksek radyoaktivite içermeleri",
+      "Düşük organik madde içermeleri",
+      "Yüksek organik madde ve patojen yükü taşımaları",
+      "Sadece inorganik kirleticilerden oluşmaları",
+      "Kimyasal olarak inert olmaları"
+    ],
+    "c": 2,
+    "e": "Açıklama: Yüksek organik madde ve patojen yükü taşımaları"
+  },
+  {
+    "qno": 83,
+    "id": "157683",
+    "q": "Soru-83: Su kalitesi–kirlilik ilişkisi kapsamında, aşağıdakilerden hangisi doğrudan bir neden–sonuç ilişkisidir?",
+    "o": [
+      "Artan çözünmüş oksijen → balık ölümleri",
+      "Düşen BOİ → organik kirlilik artışı",
+      "Düşük sıcaklık → termal kirlilik",
+      "Artan besin tuzları → ötrofikasyon",
+      "Yüksek pH → mikrobiyal kirlilik"
+    ],
+    "c": 3,
+    "e": "Açıklama: Artan besin tuzları → ötrofikasyon"
+  },
+  {
+    "qno": 84,
+    "id": "157730",
+    "q": "Soru-84: Su Kirliliği Kontrolü Yönetmeliği göre, aşağıdakilerden hangisi Yönetmeliğin kapsamı içinde yer alır?",
+    "o": [
+      "Sadece yeraltı sularının izlenmesi",
+      "Deniz taşımacılığına ilişkin kurallar",
+      "Enerji üretim tesislerinin planlanması",
+      "İklim değişikliği politikalarının belirlenmesi",
+      "Atıksu boşaltım ilkeleri ve boşaltım izni esasları"
+    ],
+    "c": 4,
+    "e": "Açıklama: Atıksu boşaltım ilkeleri ve boşaltım izni esasları"
+  },
+  {
+    "qno": 85,
+    "id": "157731",
+    "q": "Soru-85: I. Su kalitesinin korunmasına ilişkin planlama esasları ve yasaklarını, II. Atıksuların boşaltım ilkelerini ve boşaltım izni esaslarını, III. Atıksu altyapı tesisleri ile ilgili esasları IV. Su kirliliğinin önlenmesi amacıyla yapılacak izleme ve denetleme usul ve esaslarını kapsar. Su Kirliliği Kontrolü Yönetmeliği yukarıda verilenlerden hangilerini kapsar?",
+    "o": [
+      "I ve II",
+      "II ve III",
+      "I, II ve IV",
+      "II, III ve IV",
+      "I, II, III ve IV"
+    ],
+    "c": 4,
+    "e": "Açıklama: I, II, III ve IV"
+  },
+  {
+    "qno": 86,
+    "id": "157668",
+    "q": "Soru-86: Su kirliliği kontrolü kapsamında, kaynağında önleme yaklaşımının temel amacı aşağıdakilerden hangisidir?",
+    "o": [
+      "Kirliliği arıtma tesislerine bırakmak",
+      "Kirliliği oluştuktan sonra azaltmak",
+      "Doğal arıtma süreçlerini hızlandırmak",
+      "Alıcı ortam kapasitesini artırmak",
+      "Kirliliğin oluşmasını engellemek"
+    ],
+    "c": 4,
+    "e": "Açıklama: Kirliliğin oluşmasını engellemek"
+  },
+  {
+    "qno": 87,
+    "id": "157638",
+    "q": "Soru-87: Su kalitesi–kirlilik ilişkisi kapsamında, aşağıdakilerden hangisi suyun kullanım amacına uygunluğunu kaybetmesine yol açar?",
+    "o": [
+      "Doğal mineral içeriğin varlığı",
+      "Fiziksel, kimyasal ve biyolojik dengenin bozulması",
+      "Mevsimsel sıcaklık değişimleri",
+      "Akarsu rejiminin doğal seyri",
+      "Fitoplankton varlığı"
+    ],
+    "c": 1,
+    "e": "Açıklama: Fiziksel, kimyasal ve biyolojik dengenin bozulması"
+  },
+  {
+    "qno": 88,
+    "id": "157655",
+    "q": "Soru-88: Biyolojik indikatörler kapsamında, belirli canlı türlerinin kullanılması aşağıdakilerden hangisini sağlar?",
+    "o": [
+      "Kimyasal analizlerin tamamen kaldırılmasını",
+      "Uzun dönemli su kalitesi değerlendirmesini",
+      "Suyun sıcaklığının sabitlenmesini",
+      "Tuzluluk değişiminin önlenmesini",
+      "Fiziksel parametrelerin ölçülmesini"
+    ],
+    "c": 1,
+    "e": "Açıklama: Uzun dönemli su kalitesi değerlendirmesini"
+  },
+  {
+    "qno": 89,
+    "id": "157658",
+    "q": "Soru-89: Ötrofikasyon süreci kapsamında, alg patlamalarının ekosistem üzerindeki en temel olumsuz etkisi aşağıdakilerden hangisidir?",
+    "o": [
+      "Çözünmüş oksijenin azalması",
+      "Su sıcaklığının düşmesi",
+      "pH değerinin sabitlenmesi",
+      "Sertliğin artması",
+      "Tuzluluğun dengelenmesi"
+    ],
+    "c": 0,
+    "e": "Açıklama: Çözünmüş oksijenin azalması"
+  },
+  {
+    "qno": 90,
+    "id": "157628",
+    "q": "Soru-90: Su kalitesi kavramı kapsamında yapılan bir değerlendirmeye göre, bir su kaynağının kaliteli kabul edilmesinde temel ölçüt aşağıdakilerden hangisidir?",
+    "o": [
+      "Belirli bir kullanım amacına uygun özellikler taşıması",
+      "Yalnızca içilebilir nitelikte olması",
+      "Doğal kaynaklı olması",
+      "Kimyasal madde içermemesi",
+      "Sıcaklık değerinin yıl boyunca sabit kalması"
+    ],
+    "c": 0,
+    "e": "Açıklama: Belirli bir kullanım amacına uygun özellikler taşıması"
+  },
+  {
+    "qno": 91,
+    "id": "157661",
+    "q": "Soru-91: Tarımsal kaynaklı su kirliliği kapsamında, yeraltı sularının kirlenmesinde en etkili süreç aşağıdakilerden hangisidir?",
+    "o": [
+      "Buharlaşma",
+      "Yüzey akışı",
+      "Sızma ve infiltrasyon",
+      "Sedimentasyon",
+      "Fotosentez"
+    ],
+    "c": 2,
+    "e": "Açıklama: Sızma ve infiltrasyon"
+  },
+  {
+    "qno": 92,
+    "id": "157698",
+    "q": "Soru-92: Azot bileşikleri kapsamında, su ürünleri yetiştiriciliğinde en toksik etkiye sahip form aşağıdakilerden hangisidir?",
+    "o": [
+      "Nitrat",
+      "Nitrit",
+      "Azot gazı",
+      "Organik azot",
+      "Amonyak"
+    ],
+    "c": 4,
+    "e": "Açıklama: Amonyak"
+  },
+  {
+    "qno": 93,
+    "id": "157691",
+    "q": "Soru-93: Renk parametresi kapsamında, suda gözlenen renk değişimi aşağıdakilerden hangisinin göstergesi olabilir?",
+    "o": [
+      "Yalnızca sıcaklık değişiminin",
+      "Sadece mikrobiyolojik kirliliğin",
+      "Tuzluluk artışının",
+      "Organik madde ve metal iyonlarının",
+      "Oksijen fazlalığının"
+    ],
+    "c": 3,
+    "e": "Açıklama: Organik madde ve metal iyonlarının"
+  },
+  {
+    "qno": 94,
+    "id": "157713",
+    "q": "Soru-94: Su kirliliği kaynakları kapsamında, noktasal kirlilik aşağıdakilerden hangisine örnektir?",
+    "o": [
+      "Tarımsal yüzey akışı",
+      "Atmosferik çökelme",
+      "Kanalizasyon deşarjı",
+      "Toprak erozyonu",
+      "Yağış kaynaklı taşınım"
+    ],
+    "c": 2,
+    "e": "Açıklama: Kanalizasyon deşarjı"
+  },
+  {
+    "qno": 95,
+    "id": "157654",
+    "q": "Soru-95: Fitoplankton ve zooplankton kapsamında yapılan değerlendirmelere göre, bu canlılar suyun hangi özelliğini yansıtır?",
+    "o": [
+      "Trofik düzeyini",
+      "Fiziksel dayanıklılığını",
+      "Kimyasal sertliğini",
+      "Mineral içeriğini",
+      "Tuz oranını"
+    ],
+    "c": 0,
+    "e": "Açıklama: Trofik düzeyini"
+  },
+  {
+    "qno": 96,
+    "id": "157664",
+    "q": "Soru-96: Su kalitesi parametreleri kapsamında, organik kirliliğin en iyi göstergelerinden biri aşağıdakilerden hangisidir?",
+    "o": [
+      "BOİ",
+      "pH",
+      "Çözünmüş oksijen",
+      "Sertlik",
+      "Tuzluluk"
+    ],
+    "c": 0,
+    "e": "Açıklama: BOİ"
+  },
+  {
+    "qno": 97,
+    "id": "157704",
+    "q": "Soru-97: Geçici sertlik kapsamında, geçici sertliğin giderilmesi aşağıdaki yöntemlerden hangisiyle mümkündür?",
+    "o": [
+      "Kimyasal çöktürme",
+      "Filtrasyon",
+      "Kaynatma",
+      "Aktif karbon",
+      "Ters ozmoz"
+    ],
+    "c": 2,
+    "e": "Açıklama: Kaynatma"
+  },
+  {
+    "qno": 98,
+    "id": "157693",
+    "q": "Soru-98: Tat ve koku parametreleri kapsamında, içme suyu açısından bu özelliklerin önemi aşağıdakilerden hangisiyle ilişkilidir?",
+    "o": [
+      "Yalnızca estetik algıyla",
+      "Kimyasal sertlikle",
+      "Kullanıcı kabulü ve güven algısıyla",
+      "Sıcaklık toleransıyla",
+      "Tuzluluk dengesiyle"
+    ],
+    "c": 2,
+    "e": "Açıklama: Kullanıcı kabulü ve güven algısıyla"
+  },
+  {
+    "qno": 99,
+    "id": "157717",
+    "q": "Soru-99: Su kalitesinin ekosistem sağlığına etkisi kapsamında, düşük çözünmüş oksijen seviyelerinin uzun vadede yol açacağı temel sonuç aşağıdakilerden hangisidir?",
+    "o": [
+      "Tür çeşitliliğinin artması",
+      "Besin zincirinin güçlenmesi",
+      "pH dengesinin iyileşmesi",
+      "Balık ölümleri ve biyolojik dengenin bozulması",
+      "Alg üretiminin azalması"
+    ],
+    "c": 3,
+    "e": "Açıklama: Balık ölümleri ve biyolojik dengenin bozulması"
+  },
+  {
+    "qno": 100,
+    "id": "157682",
+    "q": "Soru-100: Sürdürülebilir su yönetimi kapsamında, aşağıdakilerden hangisi temel ilkelerden biridir?",
+    "o": [
+      "Su kullanımının artırılması",
+      "Doğal döngülerin değiştirilmesi",
+      "Uzun vadeli koruma anlayışı",
+      "Sadece ekonomik faydanın gözetilmesi",
+      "Su kaynaklarının özelleştirilmesi"
+    ],
+    "c": 2,
+    "e": "Açıklama: Uzun vadeli koruma anlayışı"
+  }
+];
+
+
+
+  document.getElementById("mainTitle").textContent = `${BASE_SUBJECT} Deneme Sınavı`;
+  document.getElementById("headerSubject").textContent = BASE_SUBJECT;
+  document.getElementById("sourceTag").textContent = SOURCE_TEXT;
+  document.title = `${BASE_SUBJECT} Deneme Sınavı`;
+
+  if (performance.navigation.type === performance.navigation.TYPE_RELOAD || !sessionStorage.getItem("session_active")) {
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith(storagePrefix())) localStorage.removeItem(k);
+    });
+    sessionStorage.setItem("session_active", "true");
+  }
+
+  let currentQuestions = [];
+  let currentIndex = 0;
+  let solvedIndex = -1;
+  let userAnswers = {};
+  let currentSetKey = "";
+  let stats = { correct: 0, wrong: 0 };
+  let wrongQuestionsMode = false;
+
+  function storagePrefix() {
+    return "exam_" + CURRENT_SUBJECT.replace(/\s+/g, "_") + "_";
+  }
+
+  function setStateKey(index) {
+    return storagePrefix() + "state_set_" + index;
+  }
+
+  function wrongQuestionsKey() {
+    return storagePrefix() + "wrong_questions_pool";
+  }
+
+  function getWrongQuestionsPool() {
+    return JSON.parse(localStorage.getItem(wrongQuestionsKey()) || "[]");
+  }
+
+  function saveWrongQuestionsPool(pool) {
+    localStorage.setItem(wrongQuestionsKey(), JSON.stringify(pool));
+  }
+
+  function addWrongQuestionToPool(question) {
+    const pool = getWrongQuestionsPool();
+
+    const exists = pool.some(item =>
+      item.q === question.q &&
+      JSON.stringify(item.o) === JSON.stringify(question.o)
+    );
+
+    if (!exists) {
+      pool.push({
+        q: question.q,
+        o: [...question.o],
+        c: question.c,
+        e: question.e || ""
+      });
+      saveWrongQuestionsPool(pool);
+    }
+  }
+
+  function normalizeQuestion(q, originalIndex) {
+    return {
+      id: q.id || ("q_" + originalIndex + "_" + Math.random().toString(36).slice(2, 8)),
+      originalNo: originalIndex + 1,
+      q: q.q,
+      o: [...q.o],
+      c: q.c,
+      e: q.e || "",
+      isRetry: q.isRetry || false,
+      retryFrom: q.retryFrom || null,
+      retryCount: q.retryCount || 0,
+      answeredCorrectly: q.answeredCorrectly || false
+    };
+  }
+
+  function initMenu() {
+    const menuGrid = document.getElementById("menuGrid");
+    menuGrid.innerHTML = "";
+
+    const totalSets = Math.ceil(questions.length / QUESTIONS_PER_SET);
+
+    let setsPerButton = 1;
+    let buttonCount = totalSets;
+
+    if (buttonCount > 10) {
+      setsPerButton = 2;
+      buttonCount = Math.ceil(totalSets / setsPerButton);
+    }
+
+    buttonCount = Math.min(buttonCount, 10);
+
+    for (let i = 0; i < buttonCount; i++) {
+      const startSetNo = i * setsPerButton + 1;
+      const endSetNo = Math.min(startSetNo + setsPerButton - 1, totalSets);
+
+      const start = (startSetNo - 1) * QUESTIONS_PER_SET;
+      const end = Math.min(endSetNo * QUESTIONS_PER_SET, questions.length);
+
+      if (start >= questions.length) continue;
+
+      const key = setStateKey(i);
+
+      const saved = JSON.parse(localStorage.getItem(key) || "null");
+      const solved = saved ? Object.keys(saved.userAnswers || {}).length : 0;
+      const correct = saved?.stats?.correct || 0;
+      const wrong = saved?.stats?.wrong || 0;
+
+      const totalCurrent = saved?.currentQuestions?.length || (end - start);
+      const isCompleted = saved ? (solved >= totalCurrent && totalCurrent > 0) : false;
+
+      const label = startSetNo === endSetNo
+        ? `Deneme-${startSetNo}`
+        : `Deneme-${startSetNo}-${endSetNo}`;
+
+      const btn = document.createElement("button");
+      btn.className = `menu-btn ${isCompleted ? "locked" : ""}`;
+      btn.innerHTML = `
+        <strong>${label}</strong><br>
+        <small>${end - start} Soru | Çözülen ${solved} (Doğru ${correct} Yanlış ${wrong})</small>
+      `;
+
+      if (!isCompleted) {
+        btn.onclick = () => startSet(i, key, start, end);
+      }
+
+      menuGrid.appendChild(btn);
+    }
+
+    const wrongPool = getWrongQuestionsPool();
+
+    if (wrongPool.length > 0) {
+      const wrongBtn = document.createElement("button");
+      wrongBtn.className = "wrong-menu-btn";
+      wrongBtn.innerHTML = `
+        <strong>Yanlış Yapılan Sorular</strong><br>
+        <small>${wrongPool.length} Soru | Yeniden çöz</small>
+      `;
+      wrongBtn.onclick = openWrongQuestions;
+      menuGrid.appendChild(wrongBtn);
+    }
+  }
+
+  function openWrongQuestions() {
+    const pool = getWrongQuestionsPool();
+    if (!pool.length) return;
+
+    wrongQuestionsMode = true;
+    currentSetKey = storagePrefix() + "wrong_questions_state";
+
+    const saved = JSON.parse(localStorage.getItem(currentSetKey) || "null");
+
+    if (saved) {
+      currentQuestions = saved.currentQuestions;
+      currentIndex = saved.currentIndex;
+      solvedIndex = saved.solvedIndex;
+      userAnswers = saved.userAnswers || {};
+      stats = saved.stats || { correct: 0, wrong: 0 };
+    } else {
+      currentQuestions = pool.map((q, i) => ({
+        id: "wrong_" + i + "_" + Math.random().toString(36).slice(2, 8),
+        originalNo: i + 1,
+        q: q.q,
+        o: [...q.o],
+        c: q.c,
+        e: q.e || "",
+        isRetry: false,
+        retryFrom: null,
+        retryCount: 0,
+        answeredCorrectly: false
+      }));
+
+      currentIndex = 0;
+      solvedIndex = -1;
+      userAnswers = {};
+      stats = { correct: 0, wrong: 0 };
+      saveState();
+    }
+
+    document.getElementById("menuContainer").style.display = "none";
+    document.getElementById("quizContainer").style.display = "block";
+    document.getElementById("headerSubject").textContent = "Yanlış Yapılan Sorular";
+    loadQuestion();
+    window.scrollTo(0, 0);
+  }
+
+  function startSet(idx, key, start, end) {
+    wrongQuestionsMode = false;
+    currentSetKey = key;
+
+    const saved = JSON.parse(localStorage.getItem(key) || "null");
+
+    if (saved) {
+      currentQuestions = saved.currentQuestions;
+      currentIndex = saved.currentIndex;
+      solvedIndex = saved.solvedIndex;
+      userAnswers = saved.userAnswers || {};
+      stats = saved.stats || { correct: 0, wrong: 0 };
+    } else {
+      currentQuestions = questions.slice(start, end).map((q, i) => normalizeQuestion(q, start + i));
+      currentIndex = 0;
+      solvedIndex = -1;
+      userAnswers = {};
+      stats = { correct: 0, wrong: 0 };
+      saveState();
+    }
+
+    document.getElementById("menuContainer").style.display = "none";
+    document.getElementById("quizContainer").style.display = "block";
+    document.getElementById("headerSubject").textContent = BASE_SUBJECT;
+    loadQuestion();
+    window.scrollTo(0, 0);
+  }
+
+  function getQuestionTitle(q) {
+    return `Soru-${q.originalNo}: ${q.q}`;
+  }
+
+  function loadQuestion() {
+    const q = currentQuestions[currentIndex];
+    const progress = ((currentIndex + 1) / currentQuestions.length) * 100;
+
+    document.getElementById("progressBar").style.width = progress + "%";
+    document.getElementById("footerLeft").textContent = `Kalan: ${Math.max(currentQuestions.length - (currentIndex + 1), 0)}`;
+    document.getElementById("footerRight").textContent = `${currentIndex + 1} / ${currentQuestions.length}`;
+    document.getElementById("questionText").textContent = getQuestionTitle(q);
+
+    const retryBadge = document.getElementById("retryBadge");
+    retryBadge.style.display = q.isRetry ? "block" : "none";
+
+    const optArea = document.getElementById("optionsArea");
+    const expArea = document.getElementById("explanationArea");
+    optArea.innerHTML = "";
+    expArea.style.display = "none";
+    expArea.innerHTML = "";
+
+    const letters = ["A", "B", "C", "D", "E"];
+
+    q.o.forEach((opt, idx) => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.innerHTML = `<strong>${letters[idx]})</strong> ${opt}`;
+
+      if (currentIndex <= solvedIndex) {
+        btn.disabled = true;
+        const userChoice = userAnswers[currentIndex];
+
+        if (idx === userChoice) {
+          if (userChoice === q.c) {
+            btn.classList.add("correct");
+            btn.innerHTML += ` <span class="tick show">✔</span>`;
+          } else {
+            btn.classList.add("wrong");
+          }
+        }
+
+        if (wrongQuestionsMode) {
+          if (idx === q.c) {
+            btn.classList.add("correct");
+            btn.innerHTML += ` <span class="tick show">✔</span>`;
+          }
+          expArea.innerHTML = `<strong>Açıklama:</strong> ${q.e}`;
+          expArea.style.display = "block";
+        } else {
+          if (userChoice === q.c) {
+            expArea.innerHTML = `<strong>Açıklama:</strong> ${q.e}`;
+            expArea.style.display = "block";
+          } else if (q.isRetry) {
+            if (idx === q.c) {
+              btn.classList.add("correct");
+              btn.innerHTML += ` <span class="tick show">✔</span>`;
+            }
+            expArea.innerHTML = `<strong>Açıklama:</strong> ${q.e}`;
+            expArea.style.display = "block";
+          }
+        }
+      } else {
+        btn.onclick = () => selectOption(idx);
+      }
+
+      optArea.appendChild(btn);
+    });
+
+    document.getElementById("prevBtn").style.visibility = currentIndex > 0 ? "visible" : "hidden";
+    document.getElementById("nextBtn").style.visibility = currentIndex <= solvedIndex ? "visible" : "hidden";
+  }
+
+  function selectOption(idx) {
+    const q = currentQuestions[currentIndex];
+    const isCorrect = idx === q.c;
+
+    userAnswers[currentIndex] = idx;
+    solvedIndex = Math.max(solvedIndex, currentIndex);
+
+    if (isCorrect) {
+      stats.correct++;
+      q.answeredCorrectly = true;
+    } else {
+      stats.wrong++;
+
+      if (wrongQuestionsMode) {
+        // Yanlış Yapılan Sorular modunda soru yeniden eklenmez.
+      } else {
+        addWrongQuestionToPool(q);
+
+        if (!q.isRetry) {
+          const retryQuestion = {
+            ...q,
+            isRetry: true,
+            retryFrom: q.originalNo,
+            retryCount: 1
+          };
+
+          const insertIndex = Math.min(currentIndex + 5, currentQuestions.length);
+          currentQuestions.splice(insertIndex, 0, retryQuestion);
+        }
+      }
+    }
+
+    saveState();
+    loadQuestion();
+  }
+
+  function saveState() {
+    localStorage.setItem(currentSetKey, JSON.stringify({
+      currentQuestions,
+      currentIndex,
+      solvedIndex,
+      userAnswers,
+      stats
+    }));
+  }
+
+  function goForward() {
+    if (currentIndex < solvedIndex) {
+      currentIndex = solvedIndex + 1;
+    } else if (currentIndex < currentQuestions.length - 1) {
+      currentIndex++;
+    } else {
+      return showMenu();
+    }
+
+    saveState();
+    loadQuestion();
+    window.scrollTo(0, 0);
+  }
+
+  function goBack() {
+    if (currentIndex > 0) {
+      currentIndex--;
+      saveState();
+      loadQuestion();
+      window.scrollTo(0, 0);
+    }
+  }
+
+  function showMenu() {
+    wrongQuestionsMode = false;
+    document.getElementById("headerSubject").textContent = BASE_SUBJECT;
+    document.getElementById("quizContainer").style.display = "none";
+    document.getElementById("menuContainer").style.display = "block";
+    initMenu();
+    window.scrollTo(0, 0);
+  }
+
+  function clearAllStatistics() {
+    if (confirm("Tüm veriler sıfırlansın mı?")) {
+      Object.keys(localStorage).forEach(k => {
+        if (k.startsWith(storagePrefix())) localStorage.removeItem(k);
+      });
+      initMenu();
+    }
+  }
+
+  function resetCurrentSet() {
+    if (confirm("Bu deneme sıfırlansın mı?")) {
+      localStorage.removeItem(currentSetKey);
+      showMenu();
+    }
+  }
+
+  initMenu();
+</script>
+
+<script>
+function shuffleAllQuestions() {
+  if (!confirm("Tüm sorular ve şıkları karıştırılsın mı?")) return;
+
+  // Şıkları karıştır (doğruyu koru)
+  questions.forEach(q => {
+    const correct = q.o[q.c];
+
+    for (let i = q.o.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [q.o[i], q.o[j]] = [q.o[j], q.o[i]];
+    }
+
+    q.c = q.o.findIndex(x => x === correct);
+  });
+
+  // Soruları karıştır
+  for (let i = questions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [questions[i], questions[j]] = [questions[j], questions[i]];
+  }
+
+  // localStorage temizle (mevcut sistemle uyumlu)
+  if (typeof storagePrefix === "function") {
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith(storagePrefix())) localStorage.removeItem(k);
+    });
+  }
+
+  alert("Sorular karıştırıldı!");
+
+  if (typeof initMenu === "function") initMenu();
+}
+</script>
+
+</body>
+</html>
